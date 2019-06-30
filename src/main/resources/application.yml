@@ -2,7 +2,7 @@ logging:
   level:
     ROOT: INFO
 server:
-  type: Layer4ProxyServer
+  type: Layer7ProxyServer
   serverIp: 127.0.0.1
   serverPort: 8888
   backendIp: 127.0.0.1

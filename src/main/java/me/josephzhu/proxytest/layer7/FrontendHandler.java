@@ -21,44 +21,7 @@ public class FrontendHandler extends ChannelInboundHandlerAdapter {
         this.backendThreadModel = backendThreadModel;
     }
 
-    @Override
-    public void channelActive(ChannelHandlerContext ctx) {
-        final Channel inboundChannel = ctx.channel();
-
-        Bootstrap b = new Bootstrap();
-        switch (backendThreadModel) {
-            case ReuseServerGroup:
-            {
-                b.group(Layer7ProxyServer.serverWorkerGroup);
-                break;
-            }
-            case IndividualGroup:
-            {
-                b.group(Layer7ProxyServer.backendWorkerGroup);
-                break;
-            }
-            case ReuseServerThread:
-            {
-                b.group(inboundChannel.eventLoop());
-                break;
-            }
-            default:
-                break;
-        }
-
-        b.channel(NioSocketChannel.class).handler(new ChannelInitializer<Channel>() {
-             @Override
-             protected void initChannel(Channel ch) {
-                 ch.pipeline().addLast(new HttpClientCodec(), new HttpObjectAggregator(65536));
-                 ch.pipeline().addLast(new BackendHandler(inboundChannel));
-             }
-         });
-        ChannelFuture f = b.connect(remoteHost, remotePort);
-        outboundChannel = f.channel();
-    }
-
-    @Override
-    public void channelRead(final ChannelHandlerContext ctx, Object msg) {
+    private void read(final ChannelHandlerContext ctx, Object msg) {
         if (msg instanceof FullHttpRequest) {
             FullHttpRequest httpRequest = (FullHttpRequest) msg;
             String hostPort = remoteHost +":"+ remotePort;
@@ -67,6 +30,52 @@ public class FrontendHandler extends ChannelInboundHandlerAdapter {
             outboundChannel.writeAndFlush(msg);
         } else {
             closeOnFlush(ctx.channel());
+        }
+    }
+    @Override
+    public void channelRead(final ChannelHandlerContext ctx, Object msg) {
+        if(outboundChannel==null) {
+            final Channel inboundChannel = ctx.channel();
+
+            Bootstrap b = new Bootstrap();
+            switch (backendThreadModel) {
+                case ReuseServerGroup:
+                {
+                    b.group(Layer7ProxyServer.serverWorkerGroup);
+                    break;
+                }
+                case IndividualGroup:
+                {
+                    b.group(Layer7ProxyServer.backendWorkerGroup);
+                    break;
+                }
+                case ReuseServerThread:
+                {
+                    b.group(inboundChannel.eventLoop());
+                    break;
+                }
+                default:
+                    break;
+            }
+
+            b.channel(NioSocketChannel.class).handler(new ChannelInitializer<Channel>() {
+                @Override
+                protected void initChannel(Channel ch) {
+                    ch.pipeline().addLast(new HttpClientCodec(), new HttpObjectAggregator(2000));
+                    ch.pipeline().addLast(new BackendHandler(inboundChannel));
+                }
+            });
+            ChannelFuture f = b.connect(remoteHost, remotePort).addListener((ChannelFutureListener) future -> {
+                if (future.isSuccess()) {
+                    future.channel().writeAndFlush(msg);
+                } else {
+                    future.channel().close();
+                }
+            });
+            outboundChannel = f.channel();
+        }
+        else {
+            read(ctx, msg);
         }
     }
 

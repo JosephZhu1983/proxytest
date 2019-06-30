@@ -38,7 +38,7 @@ public class Layer7ProxyServer extends ProxyServer {
                     .childHandler(new ChannelInitializer<Channel>() {
                         @Override
                         protected void initChannel(Channel ch) {
-                            ch.pipeline().addLast(new HttpServerCodec(), new HttpObjectAggregator(65536));
+                            ch.pipeline().addLast(new HttpServerCodec(), new HttpObjectAggregator(2000));
                             ch.pipeline().addLast(new FrontendHandler(serverConfig.getBackendIp(), serverConfig.getBackendPort(), serverConfig.getBackendThreadModel()));
                         }
                     })
