@@ -1,0 +1,10 @@
+logging:
+  level:
+    ROOT: INFO
+server:
+  type: Layer4ProxyServer
+  serverIp: 127.0.0.1
+  serverPort: 8888
+  backendIp: 127.0.0.1
+  backendPort: 8080
+  backendThreadModel: ReuseServerThread #ReuseServerGroup, IndividualGroup, ReuseServerThread
