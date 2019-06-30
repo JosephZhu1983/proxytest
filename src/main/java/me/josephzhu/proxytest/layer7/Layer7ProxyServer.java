@@ -42,7 +42,6 @@ public class Layer7ProxyServer extends ProxyServer {
                             ch.pipeline().addLast(new FrontendHandler(serverConfig.getBackendIp(), serverConfig.getBackendPort(), serverConfig.getBackendThreadModel()));
                         }
                     })
-                    .option(ChannelOption.AUTO_READ, true)
                     .bind(serverConfig.getServerIp(), serverConfig.getServerPort())
                     .addListener(future -> log.info("{} Started with config: {}", getClass().getSimpleName(), serverConfig))
                     .sync().channel().closeFuture().sync();
