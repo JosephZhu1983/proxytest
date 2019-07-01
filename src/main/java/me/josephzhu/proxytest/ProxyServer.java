@@ -15,15 +15,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 @Slf4j
 public abstract class ProxyServer {
 
-    @Autowired
-    protected ServerConfig serverConfig;
-
     public static final EventLoopGroup serverBossGroup = new NioEventLoopGroup();
     public static final EventLoopGroup serverWorkerGroup = new NioEventLoopGroup();
     public static final EventLoopGroup backendWorkerGroup = new NioEventLoopGroup();
+    @Autowired
+    protected ServerConfig serverConfig;
 
     protected abstract ChannelInitializer<Channel> getChannelInitializer();
-    protected void config(ServerBootstrap b) {}
+
+    protected void config(ServerBootstrap b) {
+    }
 
     public void start() throws Exception {
 

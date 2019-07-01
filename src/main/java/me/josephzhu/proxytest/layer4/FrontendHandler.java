@@ -19,24 +19,27 @@ public class FrontendHandler extends ChannelInboundHandlerAdapter {
         this.backendThreadModel = backendThreadModel;
     }
 
+    static void closeOnFlush(Channel ch) {
+        if (ch.isActive()) {
+            ch.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
+        }
+    }
+
     @Override
     public void channelActive(ChannelHandlerContext ctx) {
         final Channel inboundChannel = ctx.channel();
 
         Bootstrap b = new Bootstrap();
         switch (backendThreadModel) {
-            case ReuseServerGroup:
-            {
+            case ReuseServerGroup: {
                 b.group(Layer4ProxyServer.serverWorkerGroup);
                 break;
             }
-            case IndividualGroup:
-            {
+            case IndividualGroup: {
                 b.group(Layer4ProxyServer.backendWorkerGroup);
                 break;
             }
-            case ReuseServerThread:
-            {
+            case ReuseServerThread: {
                 b.group(inboundChannel.eventLoop());
                 break;
             }
@@ -80,11 +83,5 @@ public class FrontendHandler extends ChannelInboundHandlerAdapter {
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         cause.printStackTrace();
         closeOnFlush(ctx.channel());
-    }
-
-    static void closeOnFlush(Channel ch) {
-        if (ch.isActive()) {
-            ch.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
-        }
     }
 }

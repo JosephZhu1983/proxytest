@@ -1,7 +1,6 @@
 package me.josephzhu.proxytest.layer7;
 
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.FullHttpResponse;
@@ -17,8 +16,8 @@ public class BackendHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(final ChannelHandlerContext ctx, Object msg) {
         if (msg instanceof FullHttpResponse) {
-            FullHttpResponse httpResponse = (FullHttpResponse)msg;
-            httpResponse.headers().add("cc","dd");
+            FullHttpResponse httpResponse = (FullHttpResponse) msg;
+            httpResponse.headers().add("cc", "dd");
             inboundChannel.writeAndFlush(httpResponse);
         } else {
             ctx.channel().close();

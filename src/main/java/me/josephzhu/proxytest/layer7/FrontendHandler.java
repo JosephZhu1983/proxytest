@@ -4,7 +4,9 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.http.*;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpClientCodec;
+import io.netty.handler.codec.http.HttpObjectAggregator;
 import me.josephzhu.proxytest.BackendThreadModel;
 import org.springframework.http.HttpHeaders;
 
@@ -21,10 +23,16 @@ public class FrontendHandler extends ChannelInboundHandlerAdapter {
         this.backendThreadModel = backendThreadModel;
     }
 
+    static void closeOnFlush(Channel ch) {
+        if (ch.isActive()) {
+            ch.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
+        }
+    }
+
     private void read(final ChannelHandlerContext ctx, Object msg) {
         if (msg instanceof FullHttpRequest) {
             FullHttpRequest httpRequest = (FullHttpRequest) msg;
-            String hostPort = remoteHost +":"+ remotePort;
+            String hostPort = remoteHost + ":" + remotePort;
             httpRequest.headers().set(HttpHeaders.HOST, hostPort);
             httpRequest.headers().add("aa", "bb");
             outboundChannel.writeAndFlush(msg);
@@ -32,25 +40,23 @@ public class FrontendHandler extends ChannelInboundHandlerAdapter {
             closeOnFlush(ctx.channel());
         }
     }
+
     @Override
     public void channelRead(final ChannelHandlerContext ctx, Object msg) {
-        if(outboundChannel==null) {
+        if (outboundChannel == null) {
             final Channel inboundChannel = ctx.channel();
 
             Bootstrap b = new Bootstrap();
             switch (backendThreadModel) {
-                case ReuseServerGroup:
-                {
+                case ReuseServerGroup: {
                     b.group(Layer7ProxyServer.serverWorkerGroup);
                     break;
                 }
-                case IndividualGroup:
-                {
+                case IndividualGroup: {
                     b.group(Layer7ProxyServer.backendWorkerGroup);
                     break;
                 }
-                case ReuseServerThread:
-                {
+                case ReuseServerThread: {
                     b.group(inboundChannel.eventLoop());
                     break;
                 }
@@ -73,8 +79,7 @@ public class FrontendHandler extends ChannelInboundHandlerAdapter {
                 }
             });
             outboundChannel = f.channel();
-        }
-        else {
+        } else {
             read(ctx, msg);
         }
     }
@@ -90,11 +95,5 @@ public class FrontendHandler extends ChannelInboundHandlerAdapter {
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         cause.printStackTrace();
         closeOnFlush(ctx.channel());
-    }
-
-    static void closeOnFlush(Channel ch) {
-        if (ch.isActive()) {
-            ch.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
-        }
     }
 }

@@ -1,6 +1,9 @@
 package me.josephzhu.proxytest.layer4;
 
-import io.netty.channel.*;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 
 public class BackendHandler extends ChannelInboundHandlerAdapter {
 

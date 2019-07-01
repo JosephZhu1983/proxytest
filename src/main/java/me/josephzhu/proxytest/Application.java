@@ -13,15 +13,14 @@ import org.springframework.context.ApplicationContext;
 @Slf4j
 public class Application implements CommandLineRunner {
 
+    @Autowired
+    ApplicationContext applicationContext;
+    @Autowired
+    ServerConfig serverConfig;
+
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
     }
-
-    @Autowired
-    ApplicationContext applicationContext;
-
-    @Autowired
-    ServerConfig serverConfig;
 
     @Override
     public void run(String... args) throws Exception {
