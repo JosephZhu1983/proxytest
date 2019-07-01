@@ -3,12 +3,12 @@ logging:
     ROOT: INFO
 server:
   type: Layer7ProxyServer
-  serverIp: 127.0.0.1
+  serverIp: 172.26.5.213
   serverPort: 8888
-  backendIp: 127.0.0.1
-  backendPort: 8080
+  backendIp: 172.26.5.214
+  backendPort: 80
   backendThreadModel: ReuseServerThread #ReuseServerGroup, IndividualGroup, ReuseServerThread
   allocatorType: Unpooled
   receiveBuffer: 10240
   sendBuffer: 10240
-  maxContentLength: 2000000
+  maxContentLength: 2000

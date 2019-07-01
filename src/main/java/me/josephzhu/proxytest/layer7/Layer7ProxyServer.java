@@ -21,33 +21,14 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class Layer7ProxyServer extends ProxyServer {
 
-    @Autowired
-    ServerConfig serverConfig;
-
-    public static final EventLoopGroup serverBossGroup = new NioEventLoopGroup();
-    public static final EventLoopGroup serverWorkerGroup = new NioEventLoopGroup();
-    public static final EventLoopGroup backendWorkerGroup = new NioEventLoopGroup();
-
     @Override
-    public void start() throws Exception {
-
-        try {
-            ServerBootstrap b = new ServerBootstrap();
-            b.group(serverBossGroup, serverWorkerGroup)
-                    .channel(NioServerSocketChannel.class)
-                    .childHandler(new ChannelInitializer<Channel>() {
-                        @Override
-                        protected void initChannel(Channel ch) {
-                            ch.pipeline().addLast(new HttpServerCodec(), new HttpObjectAggregator(2000));
-                            ch.pipeline().addLast(new FrontendHandler(serverConfig.getBackendIp(), serverConfig.getBackendPort(), serverConfig.getBackendThreadModel()));
-                        }
-                    })
-                    .bind(serverConfig.getServerIp(), serverConfig.getServerPort())
-                    .addListener(future -> log.info("{} Started with config: {}", getClass().getSimpleName(), serverConfig))
-                    .sync().channel().closeFuture().sync();
-        } finally {
-            serverBossGroup.shutdownGracefully();
-            serverWorkerGroup.shutdownGracefully();
-        }
+    protected ChannelInitializer<Channel> getChannelInitializer() {
+        return new ChannelInitializer<Channel>() {
+            @Override
+            protected void initChannel(Channel ch) {
+                ch.pipeline().addLast(new HttpServerCodec(), new HttpObjectAggregator(serverConfig.getMaxContentLength()));
+                ch.pipeline().addLast(new FrontendHandler(serverConfig.getBackendIp(), serverConfig.getBackendPort(), serverConfig.getBackendThreadModel()));
+            }
+        };
     }
 }

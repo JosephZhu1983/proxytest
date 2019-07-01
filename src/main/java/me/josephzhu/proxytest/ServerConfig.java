@@ -12,4 +12,8 @@ public class ServerConfig {
     private String backendIp;
     private int backendPort;
     private BackendThreadModel backendThreadModel;
+    private int receiveBuffer;
+    private int sendBuffer;
+    private AllocatorType allocatorType;
+    private int maxContentLength;
 }
